@@ -12,7 +12,9 @@ import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Observer;
 import io.reactivex.Scheduler;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
 public class RxJava2Test {
@@ -23,9 +25,9 @@ public class RxJava2Test {
 
     @Test
     public void observableTest() {
-        Observable.create(new ObservableOnSubscribe<Object>() {
+        Observable.create(new ObservableOnSubscribe<Integer>() {
             @Override
-            public void subscribe(ObservableEmitter<Object> emitter) throws Exception {
+            public void subscribe(ObservableEmitter<Integer> emitter) throws Exception {
                 System.out.println("----subscribe----" + Thread.currentThread().getName());
 
 
@@ -63,6 +65,90 @@ public class RxJava2Test {
                 System.out.println("----onComplete----" + Thread.currentThread().getName());
             }
         });
+    }
+
+    @Test
+    public void mapTest() {
+
+        Observable.create(new ObservableOnSubscribe<Integer>() {
+            @Override
+            public void subscribe(ObservableEmitter<Integer> emitter) throws Exception {
+                emitter.onNext(1);
+                emitter.onComplete();
+            }
+        }).map(new Function<Integer, String>() {
+            @Override
+            public String apply(Integer integer) throws Exception {
+                return integer + " ----";
+            }
+        }).subscribe(new Observer<String>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+                System.out.println("----onSubscribe----" + Thread.currentThread().getName());
+            }
+
+            @Override
+            public void onNext(String s) {
+                System.out.println("----onNext----" + Thread.currentThread().getName());
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                System.out.println("----onError----" + Thread.currentThread().getName());
+            }
+
+            @Override
+            public void onComplete() {
+                System.out.println("----onComplete----" + Thread.currentThread().getName());
+            }
+        });
+    }
+
+    @Test
+    public void concatTest() {
+
+        Observable observable1 = Observable.create(new ObservableOnSubscribe<Integer>() {
+            @Override
+            public void subscribe(ObservableEmitter<Integer> emitter) throws Exception {
+                System.out.println("observable1");
+                emitter.onNext(1111);
+                emitter.onComplete();//这里写了onComplete，observable2则继续走
+            }
+        });
+
+        Observable observable2 = Observable.create(new ObservableOnSubscribe<Integer>() {
+            @Override
+            public void subscribe(ObservableEmitter<Integer> emitter) throws Exception {
+                System.out.println("observable2");
+                emitter.onNext(22222);
+                emitter.onComplete();
+            }
+        });
+
+        Observable.concat(observable1, observable2)
+                .subscribe(new Observer<Integer>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        System.out.println("----onSubscribe----" + Thread.currentThread().getName());
+                    }
+
+                    @Override
+                    public void onNext(Integer o) {
+                        System.out.println("----onNext----" + Thread.currentThread().getName());
+                        System.out.println("onNext----"+o);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        System.out.println("----onError----" + Thread.currentThread().getName()+"----"+e.getMessage());
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        System.out.println("----onComplete----" + Thread.currentThread().getName());
+                    }
+                });
+
     }
 
 }
